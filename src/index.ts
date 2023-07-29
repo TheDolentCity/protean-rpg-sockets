@@ -1,12 +1,20 @@
-// import "module-alias/register";
-
 import cors from "cors";
 import express from "express";
 import http from "http";
 import { Server, type Socket } from "socket.io";
-import { CreateRoomEvent, JoinRoomEvent, RoomNotFoundEvent } from "./types";
-import { validCreateRoom, validJoinRoom } from "./lib/validation/processors";
+import {
+  CreateMessageEvent,
+  CreateRoomEvent,
+  JoinRoomEvent,
+  RoomNotFoundEvent,
+} from "./types";
+import {
+  validCreateMessage,
+  validCreateRoom,
+  validJoinRoom,
+} from "./lib/validation/processors";
 import { createRoom, joinRoom, leaveRoom } from "./lib/rooms";
+import { createMessage } from "./lib/messages";
 
 // Initialize Server
 const app = express();
@@ -80,6 +88,13 @@ io.on("connection", (socket) => {
   //     socket.to(lastMember.id).emit('protean-state-from-server', proteanState)
   //   }
   // )
+
+  socket.on("create-message", (event: CreateMessageEvent) => {
+    console.debug(event);
+    if (!validCreateMessage(socket, event)) return;
+
+    createMessage(socket, event.roomId, event.message);
+  });
 });
 
 // Listen to requests
