@@ -7,14 +7,17 @@ import {
   CreateRoomEvent,
   JoinRoomEvent,
   RoomNotFoundEvent,
+  UpdateUserEvent,
 } from "./types";
 import {
   validCreateMessage,
   validCreateRoom,
   validJoinRoom,
+  validUpdateUser,
 } from "./lib/validation/processors";
 import { createRoom, joinRoom, leaveRoom } from "./lib/rooms";
 import { createMessage } from "./lib/messages";
+import { updateUser } from "./lib/users";
 
 // Initialize Server
 const app = express();
@@ -88,6 +91,13 @@ io.on("connection", (socket) => {
   //     socket.to(lastMember.id).emit('protean-state-from-server', proteanState)
   //   }
   // )
+
+  socket.on("update-user", (event: UpdateUserEvent) => {
+    console.debug(event);
+    if (!validUpdateUser(socket, event)) return;
+
+    updateUser(socket, event.roomId, event.id, event.username, event.color);
+  });
 
   socket.on("create-message", (event: CreateMessageEvent) => {
     console.debug(event);

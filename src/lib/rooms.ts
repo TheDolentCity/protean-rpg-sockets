@@ -1,4 +1,3 @@
-import { Socket } from "socket.io";
 import {
   RoomCreatedEvent,
   RoomJoinedEvent,
@@ -6,6 +5,8 @@ import {
   User,
 } from "../types";
 import { addUser, getRoomMembers, getUser, removeUser } from "./users";
+
+import { Socket } from "socket.io";
 
 export function createRoom(socket: Socket, roomId: string, username: string) {
   console.debug(`socket.join:${roomId}`);
@@ -15,6 +16,7 @@ export function createRoom(socket: Socket, roomId: string, username: string) {
     id: socket?.id,
     username,
     roomId,
+    color: "#333333",
   };
 
   const response = addUser(user);
@@ -33,6 +35,7 @@ export function joinRoom(socket: Socket, roomId: string, username: string) {
     id: socket?.id,
     username,
     roomId,
+    color: "#333333",
   };
 
   const response = addUser(user);

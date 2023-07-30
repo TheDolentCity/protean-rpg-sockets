@@ -1,4 +1,6 @@
-import type { User } from "../types";
+import type { User, UserUpdatedEvent } from "../types";
+
+import { Socket } from "socket.io";
 
 let users: User[] = [];
 
@@ -18,4 +20,28 @@ const removeUser = (userId: string) => {
   users = users.filter((user) => user.id !== userId);
 };
 
-export { getUser, getRoomMembers, addUser, removeUser };
+const updateUser = (
+  socket: Socket,
+  roomId: string,
+  userId: string,
+  username: string,
+  color: string
+) => {
+  const found = getUser(userId);
+  if (found) {
+    found.username = username;
+    found.color = color;
+
+    const userUpdatedEvent: UserUpdatedEvent = {
+      id: userId,
+      roomId,
+      username,
+      color,
+    };
+    console.debug(userUpdatedEvent);
+
+    socket.to(roomId).emit("user-updated", userUpdatedEvent);
+  }
+};
+
+export { getUser, getRoomMembers, addUser, removeUser, updateUser };
