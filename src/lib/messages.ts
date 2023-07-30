@@ -11,4 +11,5 @@ export function createMessage(
   console.debug(messageCreatedEvent);
 
   socket.emit("message-created", messageCreatedEvent);
+  socket.to(roomId).emit("message-created", messageCreatedEvent);
 }
