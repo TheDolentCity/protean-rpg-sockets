@@ -1,20 +1,29 @@
 import {
+  AppStatePreparedEvent,
   CreateMessageEvent,
   CreateRoomEvent,
   InvalidDataEvent,
   JoinRoomEvent,
+  RequestAppStateEvent,
   UpdateUserEvent,
 } from "../../types";
 import {
+  AppStatePreparedSchema,
   CreateMessageSchema,
   CreateRoomSchema,
   JoinRoomSchema,
+  RequestAppStateSchema,
   UpdateUserSchema,
 } from "./schemas";
 
 import { Socket } from "socket.io";
 import { ValiError } from "valibot";
 
+/**
+ * -----------------------------------------------------------------------
+ * Room Processors -------------------------------------------------------
+ * -----------------------------------------------------------------------
+ */
 export function validCreateRoom(socket: Socket, event: CreateRoomEvent) {
   try {
     return CreateRoomSchema.parse(event);
@@ -43,6 +52,50 @@ export function validJoinRoom(socket: Socket, event: JoinRoomEvent) {
   }
 }
 
+/**
+ * -----------------------------------------------------------------------
+ * App State Processors --------------------------------------------------
+ * -----------------------------------------------------------------------
+ */
+export function validRequestAppState(
+  socket: Socket,
+  event: RequestAppStateEvent
+) {
+  try {
+    return RequestAppStateSchema.parse(event);
+  } catch (error) {
+    if (error instanceof ValiError) {
+      console.debug(error);
+      const invalidDataEvent: InvalidDataEvent = {
+        message: "Failed to request app state. Invalid data.",
+      };
+      socket.emit("invalid-data", invalidDataEvent);
+    }
+  }
+}
+
+export function validAppStatePrepared(
+  socket: Socket,
+  event: AppStatePreparedEvent
+) {
+  try {
+    return AppStatePreparedSchema.parse(event);
+  } catch (error) {
+    if (error instanceof ValiError) {
+      console.debug(error);
+      const invalidDataEvent: InvalidDataEvent = {
+        message: "Failed app state prepared. Invalid data.",
+      };
+      socket.emit("invalid-data", invalidDataEvent);
+    }
+  }
+}
+
+/**
+ * -----------------------------------------------------------------------
+ * User Processors -------------------------------------------------------
+ * -----------------------------------------------------------------------
+ */
 export function validUpdateUser(socket: Socket, event: UpdateUserEvent) {
   try {
     return UpdateUserSchema.parse(event);
@@ -57,6 +110,11 @@ export function validUpdateUser(socket: Socket, event: UpdateUserEvent) {
   }
 }
 
+/**
+ * -----------------------------------------------------------------------
+ * Message Processors ----------------------------------------------------
+ * -----------------------------------------------------------------------
+ */
 export function validCreateMessage(socket: Socket, event: CreateMessageEvent) {
   try {
     return CreateMessageSchema.parse(event);

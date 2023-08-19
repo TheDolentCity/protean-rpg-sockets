@@ -3,37 +3,60 @@ import express from "express";
 import http from "http";
 import { Server, type Socket } from "socket.io";
 import {
+  AppStatePreparedEvent,
   CreateMessageEvent,
   CreateRoomEvent,
   JoinRoomEvent,
+  RequestAppStateEvent,
   RoomNotFoundEvent,
   UpdateUserEvent,
 } from "./types";
 import {
+  validAppStatePrepared,
   validCreateMessage,
   validCreateRoom,
   validJoinRoom,
+  validRequestAppState,
   validUpdateUser,
 } from "./lib/validation/processors";
 import { createRoom, joinRoom, leaveRoom } from "./lib/rooms";
 import { createMessage } from "./lib/messages";
 import { updateUser } from "./lib/users";
+import { deliverRequestedAppState, prepareAppState } from "./lib/app-state";
 
-// Initialize Server
+/**
+ * -----------------------------------------------------------------------
+ * Initialize Server -----------------------------------------------------
+ * -----------------------------------------------------------------------
+ */
 const app = express();
 app.use(cors());
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Function Definitions
+/**
+ * -----------------------------------------------------------------------
+ * Function Definitions --------------------------------------------------
+ * -----------------------------------------------------------------------
+ */
 function roomIsCreated(roomId: string): boolean {
   const rooms = [...io.sockets.adapter.rooms];
   return rooms?.some((room) => room[0] === roomId);
 }
 
-// Configure Webhooks
-io.on("connection", (socket) => {
+/**
+ * -----------------------------------------------------------------------
+ * Configure Server ------------------------------------------------------
+ * -----------------------------------------------------------------------
+ */
+io.on("connection", (socket: Socket) => {
   console.debug(`connected:${socket.id}`);
+
+  /**
+   * -----------------------------------------------------------------------
+   * Room Events -----------------------------------------------------------
+   * -----------------------------------------------------------------------
+   */
   socket.on("create-room", (event: CreateRoomEvent) => {
     console.debug(event);
     if (!validCreateRoom(socket, event)) return;
@@ -71,27 +94,38 @@ io.on("connection", (socket) => {
     leaveRoom(socket);
   });
 
-  // socket.on('client-ready', (roomId: string) => {
-  //   const members = getRoomMembers(roomId);
-  //   const adminMember = members[0];
+  /**
+   * -----------------------------------------------------------------------
+   * App State Events ------------------------------------------------------
+   * -----------------------------------------------------------------------
+   */
+  socket.on("request-app-state", (event: RequestAppStateEvent) => {
+    console.debug("RequestAppStateEvent");
+    console.debug(event);
+    if (!validRequestAppState(socket, event)) return;
 
-  //   if (!adminMember) return;
+    prepareAppState(socket, event.roomId, event.userId);
+  });
 
-  //   socket.to(adminMember.id).emit('get-protean-state');
-  // })
+  socket.on("app-state-prepared", (event: AppStatePreparedEvent) => {
+    console.debug("AppStatePreparedEvent");
+    console.debug(event);
+    if (!validAppStatePrepared(socket, event)) return;
 
-  // socket.on(
-  //   'send-protean-state',
-  //   ({ proteanState, roomId }: { proteanState: string; roomId: string }) => {
-  //     const members = getRoomMembers(roomId)
-  //     const lastMember = members[members.length - 1]
+    deliverRequestedAppState(
+      socket,
+      event.roomId,
+      event.userId,
+      event.members,
+      event.messages
+    );
+  });
 
-  //     if (!lastMember) return
-
-  //     socket.to(lastMember.id).emit('protean-state-from-server', proteanState)
-  //   }
-  // )
-
+  /**
+   * -----------------------------------------------------------------------
+   * User Events -----------------------------------------------------------
+   * -----------------------------------------------------------------------
+   */
   socket.on("update-user", (event: UpdateUserEvent) => {
     console.debug(event);
     if (!validUpdateUser(socket, event)) return;
@@ -99,6 +133,11 @@ io.on("connection", (socket) => {
     updateUser(socket, event.roomId, event.id, event.username, event.color);
   });
 
+  /**
+   * -----------------------------------------------------------------------
+   * Message Events --------------------------------------------------------
+   * -----------------------------------------------------------------------
+   */
   socket.on("create-message", (event: CreateMessageEvent) => {
     console.debug(event);
     if (!validCreateMessage(socket, event)) return;
@@ -107,6 +146,10 @@ io.on("connection", (socket) => {
   });
 });
 
-// Listen to requests
+/**
+ * -----------------------------------------------------------------------
+ * Start Listening -------------------------------------------------------
+ * -----------------------------------------------------------------------
+ */
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => console.log(`Server is running on port ${PORT}.`));

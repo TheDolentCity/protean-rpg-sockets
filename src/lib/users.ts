@@ -4,12 +4,20 @@ import { Socket } from "socket.io";
 
 let users: User[] = [];
 
+const getAdminUser = (roomId: string) => {
+  return users?.at(0);
+};
+
 const getUser = (userId: string) => {
   return users.find((user) => user.id === userId);
 };
 
 const getRoomMembers = (roomId: string) => {
   return users.filter((user) => user.roomId === roomId);
+};
+
+const getRoomMember = (roomId: string, userId: string) => {
+  return users.find((user) => user.roomId === roomId && user.id == userId);
 };
 
 const addUser = (user: User) => {
@@ -44,4 +52,12 @@ const updateUser = (
   }
 };
 
-export { getUser, getRoomMembers, addUser, removeUser, updateUser };
+export {
+  addUser,
+  getAdminUser,
+  getUser,
+  getRoomMember,
+  getRoomMembers,
+  removeUser,
+  updateUser,
+};

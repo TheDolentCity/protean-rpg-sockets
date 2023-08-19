@@ -1,12 +1,14 @@
 import {
+  MembersUpdatedEvent,
   RoomCreatedEvent,
   RoomJoinedEvent,
-  UpdateMembersEvent,
   User,
 } from "../types";
 import { addUser, getRoomMembers, getUser, removeUser } from "./users";
 
 import { Socket } from "socket.io";
+
+const DefaultColor: string = "#333333";
 
 export function createRoom(socket: Socket, roomId: string, username: string) {
   console.debug(`socket.join:${roomId}`);
@@ -16,7 +18,7 @@ export function createRoom(socket: Socket, roomId: string, username: string) {
     id: socket?.id,
     username,
     roomId,
-    color: "#333333",
+    color: DefaultColor,
   };
 
   const response = addUser(user);
@@ -35,7 +37,7 @@ export function joinRoom(socket: Socket, roomId: string, username: string) {
     id: socket?.id,
     username,
     roomId,
-    color: "#333333",
+    color: DefaultColor,
   };
 
   const response = addUser(user);
@@ -44,12 +46,12 @@ export function joinRoom(socket: Socket, roomId: string, username: string) {
   console.debug(`members:${members}`);
 
   const roomJoinedEvent: RoomJoinedEvent = { roomId, user, members };
-  const updateMembersEvent: UpdateMembersEvent = { members };
+  const membersUpdatedEvent: MembersUpdatedEvent = { members };
   console.debug(roomJoinedEvent);
-  console.debug(updateMembersEvent);
+  console.debug(membersUpdatedEvent);
 
   socket.emit("room-joined", roomJoinedEvent);
-  socket.to(roomId).emit("update-members", updateMembersEvent);
+  socket.to(roomId).emit("members-updated", membersUpdatedEvent);
 }
 
 export function leaveRoom(socket: Socket) {
@@ -59,10 +61,10 @@ export function leaveRoom(socket: Socket) {
   removeUser(socket?.id);
   const members = getRoomMembers(user?.roomId);
 
-  const updateMembersEvent: UpdateMembersEvent = { members };
-  console.debug(updateMembersEvent);
+  const membersUpdatedEvent: MembersUpdatedEvent = { members };
+  console.debug(membersUpdatedEvent);
 
-  socket.to(user?.roomId).emit("update-members", updateMembersEvent);
+  socket.to(user?.roomId).emit("members-updated", membersUpdatedEvent);
   socket.leave(user?.roomId);
   console.debug(`leave:${user?.roomId}`);
 }
