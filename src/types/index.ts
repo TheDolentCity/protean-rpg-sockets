@@ -11,9 +11,8 @@ export interface User {
 }
 
 export interface Message {
-  color: string;
   text: string;
-  createdBy: string;
+  createdBy: string; // User.ID
   createdAt: Date;
 }
 

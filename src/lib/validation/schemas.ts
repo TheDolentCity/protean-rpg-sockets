@@ -30,14 +30,12 @@ export const ColorSchema = string([
 ]);
 
 export const MessageSchema = object({
-  color: ColorSchema,
   text: string([
     minLength(1, "Text must be at least 1 characters"),
     maxLength(256, "Text cannot be more than 256 characters."),
   ]),
   createdBy: string([
-    minLength(2, "Created by must be at least 2 characters"),
-    maxLength(32, "Created by cannot be more than 32 characters."),
+    minLength(1, "Created by must not be empty."),
   ]),
 });
 
