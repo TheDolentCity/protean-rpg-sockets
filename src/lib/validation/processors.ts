@@ -18,6 +18,7 @@ import {
 
 import { Socket } from "socket.io";
 import { ValiError } from "valibot";
+import { sanitize } from "isomorphic-dompurify";
 
 /**
  * -----------------------------------------------------------------------

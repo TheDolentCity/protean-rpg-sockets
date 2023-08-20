@@ -23,6 +23,7 @@ import { createRoom, joinRoom, leaveRoom } from "./lib/rooms";
 import { createMessage } from "./lib/messages";
 import { updateUser } from "./lib/users";
 import { deliverRequestedAppState, prepareAppState } from "./lib/app-state";
+import { sanitize } from "isomorphic-dompurify";
 
 /**
  * -----------------------------------------------------------------------
@@ -140,6 +141,12 @@ io.on("connection", (socket: Socket) => {
    */
   socket.on("create-message", (event: CreateMessageEvent) => {
     console.debug(event);
+
+    // Always sanitize message text
+    if (event?.message?.text) {
+      event.message.text = sanitize(event.message.text);
+    } else return;
+
     if (!validCreateMessage(socket, event)) return;
 
     createMessage(socket, event.roomId, event.message);
